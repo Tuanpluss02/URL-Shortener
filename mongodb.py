@@ -5,7 +5,7 @@ from config import MONGODB_URL
 
 # MongoDB
 class MongoDB:
-    client: MongoClient = None
+    client: MongoClient = None # type: ignore
 
 
 db = MongoDB()

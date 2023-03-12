@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 import pymongo
 from fastapi import FastAPI, HTTPException, Response
@@ -11,6 +12,7 @@ app = FastAPI()
 mongo_client = pymongo.MongoClient(MONGODB_URL)
 db = mongo_client[MONGODB_NAME]
 url_collection = db["url_collection"]
+
 
 # origins = [
 #     "http://localhost.tiangolo.com",
@@ -30,22 +32,22 @@ app.add_middleware(
 )
 
 
-# @app.on_event("startup")
-# async def startup_event():
-#     await connect_to_mongo()
-#     client = await get_nosql_db()
-#     db = client[MONGODB_NAME]
-#     if "url_collection" not in db.list_collection_names():
-#         try:
-#             db.create_collection("url_collection")
-#         except pymongo.error.CollectionInvalid as error:
-#             logging.warning(error)
-#     try:
-#         url_collection = db.url_collection
-#         url_collection.create_index(
-#             "shortname", shortname="shortname", unique=True)
-#     except pymongo.error.CollectionInvalid as error:
-#         logging.warning(error)
+@app.on_event("startup")
+async def startup_event():
+    await connect_to_mongo()
+    client = await get_nosql_db()
+    db = client[MONGODB_NAME]
+    if "url_collection" not in db.list_collection_names():
+        try:
+            db.create_collection("url_collection")
+        except pymongo.error.CollectionInvalid as error: # type: ignore
+            logging.warning(error)
+    try:
+        url_collection = db.url_collection
+        url_collection.create_index(
+            "shortname", shortname="shortname", unique=True)
+    except pymongo.error.CollectionInvalid as error: # type: ignore
+        logging.warning(error)
 
 
 @app.on_event("shutdown")
