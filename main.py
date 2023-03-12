@@ -14,13 +14,6 @@ db = mongo_client[MONGODB_NAME]
 url_collection = db["url_collection"]
 
 
-# origins = [
-#     "http://localhost.tiangolo.com",
-#     "https://localhost.tiangolo.com",
-#     "http://localhost",
-#     "http://localhost:3000",
-#     "http://localhost:3000",
-# ]
 
 origins = ["*"]
 
@@ -53,7 +46,12 @@ app.add_middleware(
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await close_mongo_connection()
+    try:
+        mongo_client.close()
+        logging.info("closed mongo connection")
+    except Exception as e:
+        logging.warning(e)
+    
 
 
 @app.get("/")
@@ -99,7 +97,7 @@ async def redirect_to_long_url(short_name: str, response: Response):
     return RedirectResponse(url=long_url)
 
 
-@app.patch("/edit-url")
+@app.patch("/admin/edit-url")
 async def edit_url(short_name: Optional[str] = None, short_url: Optional[str] = None, long_url: str = None): # type: ignore
     if long_url is None:
         raise HTTPException(status_code=400, detail="Long URL must be provided")
@@ -128,7 +126,7 @@ async def edit_url(short_name: Optional[str] = None, short_url: Optional[str] = 
     return {"short_url": BASE_SHORT_URL + short_name, "long_url": long_url}
 
 
-@app.delete("/delete-url")
+@app.delete("/admin/delete-url")
 async def delete_url(short_name: Optional[str] = None, short_url: Optional[str] = None):
     if short_name is None and short_url is None:
         raise HTTPException(status_code=400, detail="Either short_name or short_url must be provided")
@@ -148,3 +146,12 @@ async def delete_url(short_name: Optional[str] = None, short_url: Optional[str] 
         raise HTTPException(status_code=404, detail="Short URL not found")
 
     return {"message": "Short URL deleted successfully"}
+
+@app.get("/admin/get_urls")
+async def get_urls():
+    urls = []
+    get_all_urls = url_collection.find()
+    for url in get_all_urls:
+        print(str(url['_id']))
+        urls.append({"id": str(url['_id']) ,"short_url": url['short_url'], "long_url": url["long_url"]})
+    return {"urls": urls}
