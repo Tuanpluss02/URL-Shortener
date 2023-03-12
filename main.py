@@ -1,7 +1,5 @@
-import logging
 from typing import Optional
 import pymongo
-import json
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
@@ -58,8 +56,8 @@ async def shutdown_event():
 @app.get("/")
 async def root():
     "Root endpoint"
-    return RedirectResponse(url="https://url-shortener-silk-iota.vercel.app/docs")
-    # return RedirectResponse(url="https://stormx.software")
+    return RedirectResponse(url="https://stormx.vercel.app/docs")
+    # return RedirectResponse(url="http://127.0.0.1:8000/docs")
 
 
 
@@ -84,7 +82,7 @@ async def shorten_url(long_url: str, short_name: str):
     if not result.acknowledged:
         raise HTTPException(status_code=500, detail="Failed to insert the record into the database")
 
-    return {"short_url": short_url}
+    return {"messages" : "success", "short_url": short_url}
     
 
 @app.get("/{short_name}")
