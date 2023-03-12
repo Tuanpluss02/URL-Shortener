@@ -21,6 +21,7 @@ url_collection = db["url_collection"]
 #     "http://localhost:3000",
 #     "http://localhost:3000",
 # ]
+
 origins = ["*"]
 
 app.add_middleware(
@@ -32,22 +33,22 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-async def startup_event():
-    await connect_to_mongo()
-    client = await get_nosql_db()
-    db = client[MONGODB_NAME]
-    if "url_collection" not in db.list_collection_names():
-        try:
-            db.create_collection("url_collection")
-        except pymongo.error.CollectionInvalid as error: # type: ignore
-            logging.warning(error)
-    try:
-        url_collection = db.url_collection
-        url_collection.create_index(
-            "shortname", shortname="shortname", unique=True)
-    except pymongo.error.CollectionInvalid as error: # type: ignore
-        logging.warning(error)
+# @app.on_event("startup")
+# async def startup_event():
+#     await connect_to_mongo()
+#     client = await get_nosql_db()
+#     db = client[MONGODB_NAME]
+#     if "url_collection" not in db.list_collection_names():
+#         try:
+#             db.create_collection("url_collection")
+#         except pymongo.error.CollectionInvalid as error: # type: ignore
+#             logging.warning(error)
+#     try:
+#         url_collection = db.url_collection
+#         url_collection.create_index(
+#             "shortname", shortname="shortname", unique=True)
+#     except pymongo.error.CollectionInvalid as error: # type: ignore
+#         logging.warning(error)
 
 
 @app.on_event("shutdown")
