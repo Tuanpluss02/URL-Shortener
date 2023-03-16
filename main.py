@@ -1,10 +1,11 @@
 import logging
 from typing import Optional
+from bson import ObjectId
 import pymongo
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
-from mongodb import close_mongo_connection, connect_to_mongo, get_nosql_db
 from config import MONGODB_NAME, BASE_SHORT_URL,MONGODB_URL
 
 
@@ -57,8 +58,8 @@ async def shutdown_event():
 @app.get("/")
 async def root():
     "Root endpoint"
-    return RedirectResponse(url="https://stormx.vercel.app/docs")
-    # return RedirectResponse(url="http://127.0.0.1:8000/docs")
+    # return RedirectResponse(url="https://stormx.vercel.app/docs")
+    return RedirectResponse(url="http://127.0.0.1:8000/docs")
 
 
 
@@ -73,8 +74,7 @@ async def shorten_url(long_url: str, short_name: str):
     short_url = BASE_SHORT_URL + short_name
 
     if url_collection.find_one({"shortname": short_name}):
-        raise HTTPException(status_code=409, detail="Short name already exists")
-
+        return JSONResponse(status_code=202, content= {"detail" : "Short name already exists"})
     try:
         result = url_collection.insert_one({"shortname": short_name,"short_url" : short_url, "long_url": long_url})
     except Exception as e:
@@ -83,7 +83,7 @@ async def shorten_url(long_url: str, short_name: str):
     if not result.acknowledged:
         raise HTTPException(status_code=500, detail="Failed to insert the record into the database")
 
-    return {"messages" : "success", "short_url": short_url}
+    return JSONResponse({"messages" : "success", "short_url": short_url})
     
 
 @app.get("/{short_name}")
@@ -127,11 +127,13 @@ async def edit_url(short_name: Optional[str] = None, short_url: Optional[str] = 
 
 
 @app.delete("/admin/delete-url")
-async def delete_url(short_name: Optional[str] = None, short_url: Optional[str] = None):
-    if short_name is None and short_url is None:
-        raise HTTPException(status_code=400, detail="Either short_name or short_url must be provided")
+async def delete_url(short_name: Optional[str] = None, short_url: Optional[str] = None, id : Optional[str] = None):
+    if short_name is None and short_url is None and id is None:
+        raise HTTPException(status_code=400, detail="Either id or short_name or short_url must be provided")
 
-    if short_name is not None:
+    if id is not None:
+        filter = {"_id": ObjectId(id)}
+    elif short_name is not None:
         filter = {"shortname": short_name}
     else:
         if not str(short_url).startswith(BASE_SHORT_URL):
@@ -152,6 +154,5 @@ async def get_urls():
     urls = []
     get_all_urls = url_collection.find()
     for url in get_all_urls:
-        print(str(url['_id']))
         urls.append({"id": str(url['_id']) ,"short_url": url['short_url'], "long_url": url["long_url"]})
     return {"urls": urls}
