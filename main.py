@@ -58,8 +58,8 @@ async def shutdown_event():
 @app.get("/")
 async def root():
     "Root endpoint"
-    # return RedirectResponse(url="https://stormx.vercel.app/docs")
-    return RedirectResponse(url="http://127.0.0.1:8000/docs")
+    return RedirectResponse(url="https://stormx.vercel.app/docs")
+    # return RedirectResponse(url="http://127.0.0.1:8000/docs")
 
 
 
