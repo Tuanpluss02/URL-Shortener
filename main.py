@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 from config import MONGODB_NAME, BASE_SHORT_URL,MONGODB_URL
+from validate import is_valid_url
 
 
 app = FastAPI()
@@ -20,7 +21,7 @@ origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # can alter with time
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,9 +30,9 @@ app.add_middleware(
 
 # @app.on_event("startup")
 # async def startup_event():
-#     await connect_to_mongo()
-#     client = await get_nosql_db()
-#     db = client[MONGODB_NAME]
+#     # await connect_to_mongo()
+#     # client = await get_nosql_db()
+#     # db = client[MONGODB_NAME]
 #     if "url_collection" not in db.list_collection_names():
 #         try:
 #             db.create_collection("url_collection")
@@ -65,9 +66,10 @@ async def root():
 
 @app.post("/shorten")
 async def shorten_url(long_url: str, short_name: str):
-    if not long_url.startswith(("http://", "https://")):
-        long_url = "http://" + long_url
-
+    # if not long_url.startswith(("http://", "https://")):
+    #     long_url = "http://" + long_url
+    if not is_valid_url(long_url):
+        raise HTTPException(status_code=400, detail="Invalid URL")
     if not all(c.isalnum() or c == "-" for c in short_name):
         raise HTTPException(status_code=400, detail="Short name can only contain letters and numbers")
 
@@ -83,11 +85,11 @@ async def shorten_url(long_url: str, short_name: str):
     if not result.acknowledged:
         raise HTTPException(status_code=500, detail="Failed to insert the record into the database")
 
-    return JSONResponse({"messages" : "success", "short_url": short_url})
+    return JSONResponse(status_code=200,content= {"messages" : "success", "short_url": short_url})
     
 
 @app.get("/{short_name}")
-async def redirect_to_long_url(short_name: str, response: Response):
+async def redirect_to_long_url(short_name: str):
     url_doc = url_collection.find_one({"shortname": short_name})
 
     if url_doc is None:
@@ -156,3 +158,4 @@ async def get_urls():
     for url in get_all_urls:
         urls.append({"id": str(url['_id']) ,"short_url": url['short_url'], "long_url": url["long_url"]})
     return {"urls": urls}
+
