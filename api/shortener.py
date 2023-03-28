@@ -2,11 +2,13 @@ import logging
 from typing import Optional
 from bson import ObjectId
 import pymongo
-from fastapi import APIRouter, FastAPI, HTTPException, Response
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Response
 from fastapi.responses import RedirectResponse
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 from config import MONGODB_NAME, BASE_SHORT_URL,MONGODB_URL
+from controllers.users import get_current_active_user
+from models import User
 from validate import is_valid_url
 
 # app = FastAPI()
@@ -104,7 +106,7 @@ async def delete_url(short_name: Optional[str] = None, short_url: Optional[str] 
     return {"message": "Short URL deleted successfully"}
 
 @router.get("/admin/get_urls", tags=["Shortener"])
-async def get_urls():
+async def get_urls(current_user: User = Depends(get_current_active_user)):
     urls = []
     get_all_urls = url_collection.find()
     for url in get_all_urls:

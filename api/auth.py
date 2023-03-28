@@ -10,12 +10,10 @@ from controllers import (
     authenticate_user,
     get_current_active_user,
     create_access_token,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
 )
 from models import BaseUser, User
-# from mongodb import get_nosql_db, MongoClient
 from models import Token
-from config import MONGODB_NAME
+from config import ACCESS_TOKEN_EXPIRE_MINUTES, MONGODB_NAME
 from mongodb import get_mongo_user_collection
 
 logger = logging.getLogger(__name__)

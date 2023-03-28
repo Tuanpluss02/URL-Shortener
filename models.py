@@ -3,11 +3,6 @@ from typing import List, Optional
 from bson import ObjectId
 from pydantic import BaseModel, Field
 
-class User(BaseModel):
-    username: str
-    hashed_password: str
-    salt: str
-    disabled: bool = False
 
 class UrlInDB(BaseModel):
     _id: ObjectId
@@ -19,6 +14,12 @@ class UrlInDB(BaseModel):
     def __getitem__(self, key):
         return getattr(self, key)
 
+class User(BaseModel):
+    username: str
+    hashed_password: str
+    salt: str
+    disabled: bool = False
+    urls: Optional[List[UrlInDB]] = []
 
 class BaseUser(BaseModel):
     username : str

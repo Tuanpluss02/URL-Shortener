@@ -9,3 +9,6 @@ async def get_mongo_user_collection():
 
 async def get_mongo_url_collection():
     return client[MONGODB_NAME].url_collection
+
+async def get_mongo_client() -> MongoClient:
+    return MongoClient(MONGODB_URL)
