@@ -1,10 +1,10 @@
 import bcrypt
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import List, Optional
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
 from config import ALGORITHM, SECRET_KEY
-from models import TokenData, User, UserInDB
+from models import TokenData, UrlInDB, User, UserInDB
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from mongodb import get_mongo_user_collection
@@ -78,6 +78,7 @@ async def create_user(request, collection):
     user["username"] = request.username
     user["salt"] = salt
     user["hashed_password"] = hashed_password
+    user["urls"] = []
     dbuser = UserInDB(**user)
     try:
         response = collection.insert_one(dict(dbuser))

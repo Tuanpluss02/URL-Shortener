@@ -36,7 +36,7 @@ async def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.put("/register" , response_model=Token)
+@router.post("/register" , response_model=Token)
 async def create_user_in_db(request: BaseUser, collection = Depends(get_mongo_user_collection)):
     try:
         await create_user(request, collection)
