@@ -14,7 +14,6 @@ class UrlInDB(BaseModel):
     long_url: str =''
     short_url: str= ''
     shortname: str =''
-    view_count: int = 0
     def __setitem__(self, key, value):
         self.__dict__[key] = value
     def to_dict(self):
@@ -37,18 +36,7 @@ class User(BaseModel):
 
 class UserInDB(User):
     _id: ObjectId = ObjectId()
-    def get_id(self):
-        return str(self._id)
-    # @property
-    # def id(self):
-    #     return str(self._id)
-    # def __getitem__(self, key):
-    #     if key == "_id":
-    #         return str(self._id)
-    #     else:
-    #         return super().__getitem__(key)
-    # def __setitem__(self, key, value):
-    #     self.__dict__[key] = value
+
 
 
 class Token(BaseModel):

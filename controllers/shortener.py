@@ -5,7 +5,7 @@ from bson import ObjectId
 from fastapi import HTTPException
 import pymongo
 from config import BASE_SHORT_URL
-from controllers.users import get_user
+from controllers.users import get_current_active_user, get_user
 from models import BaseUrl, UrlInDB, User, UserInDB
 from mongodb import get_mongo_client, get_mongo_url_collection, get_mongo_user_collection
 from ultils import format_ids
@@ -63,3 +63,4 @@ async def push_url_to_public_db(url: BaseUrl)->UrlInDB:
     except:
         logging.warning("Failed to add new url to public db")
         return UrlInDB(**{})
+

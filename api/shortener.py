@@ -2,12 +2,12 @@ import logging
 from typing import Optional
 from bson import ObjectId
 import pymongo
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.responses import JSONResponse
 from config import MONGODB_NAME, BASE_SHORT_URL,MONGODB_URL
 from controllers.shortener import add_new_url_to_user, check_valid_request, push_url_to_public_db
-from controllers.users import get_current_active_user, get_user, get_user_ins
+from controllers.users import get_current_active_user, get_user_ins
 from models import BaseUrl, User
 
 router = APIRouter()
@@ -15,30 +15,7 @@ logger = logging.getLogger(__name__)
 mongo_client = pymongo.MongoClient(MONGODB_URL)
 db = mongo_client[MONGODB_NAME]
 url_collection = db["url_collection"]
-user_collection = db["user_collection"]
 
-
-# @router.post("/shorten" )
-# async def shorten_url(long_url: str, short_name: str):
-#     if short_name == "shorten":
-#         raise HTTPException(status_code=400, detail="Short name cannot be \'shorten\'")
-#     if not is_valid_url(long_url):
-#         raise HTTPException(status_code=400, detail="Invalid URL")
-#     if not all(c.isalnum() or c == "-" for c in short_name):
-#         raise HTTPException(status_code=400, detail="Short name can only contain letters and numbers")
-#     short_url = BASE_SHORT_URL + short_name
-
-#     if url_collection.find_one({"shortname": short_name}):
-#         return JSONResponse(status_code=202, content= {"detail" : "Short name already exists"})
-#     try:
-#         result = url_collection.insert_one({"shortname": short_name,"short_url" : short_url, "long_url": long_url})
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
-#     if not result.acknowledged:
-#         raise HTTPException(status_code=500, detail="Failed to insert the record into the database")
-
-#     return JSONResponse(status_code=200,content= {"messages" : "success", "short_url": short_url})
 
 @router.post("/shorten" )
 async def shorten_url(long_url: str, short_name: str,current_user: User = Depends(get_current_active_user)):
@@ -58,12 +35,9 @@ async def shorten_url(long_url: str, short_name: str,current_user: User = Depend
 @router.get("/{short_name}" )
 async def redirect_to_long_url(short_name: str):
     url_doc = url_collection.find_one({"shortname": short_name})
-    user = await get_current_active_user()
     if url_doc is None:
         raise HTTPException(status_code=404, detail="Short URL not found")
     long_url = url_doc["long_url"]
-    url_collection.update_one({"shortname": short_name}, {"$inc": {"view_count": 1}})
-    user_collection.update_one({"username": user['username']}, {"$inc": {"view_count": 1}})
     return RedirectResponse(url=long_url)
 
 
