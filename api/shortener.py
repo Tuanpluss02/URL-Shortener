@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 mongo_client = pymongo.MongoClient(MONGODB_URL)
 db = mongo_client[MONGODB_NAME]
 url_collection = db["url_collection"]
+user_collection = db["user_collection"]
 
 
 # @router.post("/shorten" )
@@ -57,11 +58,12 @@ async def shorten_url(long_url: str, short_name: str,current_user: User = Depend
 @router.get("/{short_name}" )
 async def redirect_to_long_url(short_name: str):
     url_doc = url_collection.find_one({"shortname": short_name})
-
+    user = await get_current_active_user()
     if url_doc is None:
         raise HTTPException(status_code=404, detail="Short URL not found")
-
     long_url = url_doc["long_url"]
+    url_collection.update_one({"shortname": short_name}, {"$inc": {"view_count": 1}})
+    user_collection.update_one({"username": user['username']}, {"$inc": {"view_count": 1}})
     return RedirectResponse(url=long_url)
 
 
