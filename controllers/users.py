@@ -87,12 +87,21 @@ async def create_user(request, collection):
         raise Exception(f"{e}")
 
 
-async def get_user(name):
+async def get_user(name) -> UserInDB:
     users_collection = await get_mongo_user_collection()
     row = users_collection.find_one({"username": name})
     if row is not None:
         row = format_ids(row)
         return row
     else:
-        return None
+        return UserInDB(**{})
 
+async def get_user_ins(name:str) -> UserInDB:
+    users_collection = await get_mongo_user_collection()
+    mongo_response = users_collection.find_one({"username": name})
+    if mongo_response is None:
+        return UserInDB(**{})
+    user_data_dict = mongo_response.copy()  # make a copy of the data
+    user_data_dict['_id'] = str(mongo_response['_id'])  # convert ObjectId to string    url_data = UrlInDB(**url_data_dict) 
+    user_data = UserInDB(**user_data_dict)
+    return user_data

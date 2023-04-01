@@ -1,3 +1,6 @@
+from models import UrlInDB
+
+
 def format_ids(nested_dictionary):
     for key, value in nested_dictionary.items():
         if type(value) is dict:

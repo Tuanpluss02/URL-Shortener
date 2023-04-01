@@ -3,33 +3,52 @@ from typing import List, Optional
 from bson import ObjectId
 from pydantic import BaseModel, Field
 
-
-class UrlInDB(BaseModel):
-    _id: ObjectId
+class BaseUrl(BaseModel):
     long_url: str
     short_url: str
     shortname: str
-    vierw_count: int = 0
-    date_created: datetime = Field(default_factory=datetime.utcnow)
-    def __getitem__(self, key):
-        return getattr(self, key)
+        
+
+class UrlInDB(BaseModel):
+    _id: ObjectId = ObjectId()
+    long_url: str =''
+    short_url: str= ''
+    shortname: str =''
+    view_count: int = 0
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
+    def to_dict(self):
+        return self.__dict__
+
+
+
+class BaseUser(BaseModel):
+    username : str
+    password : str
 
 class User(BaseModel):
     username: str
     hashed_password: str
     salt: str
     disabled: bool = False
-    urls: Optional[List[UrlInDB]] = []
-
-class BaseUser(BaseModel):
-    username : str
-    password : str
+    urls: Optional[List[UrlInDB]]
+    def __getitem__(self, key):
+        return self.__dict__[key]
 
 class UserInDB(User):
-    _id: ObjectId
-    date_created: datetime = Field(default_factory=datetime.utcnow)
-    def __getitem__(self, key):
-        return getattr(self, key)
+    _id: ObjectId = ObjectId()
+    def get_id(self):
+        return str(self._id)
+    # @property
+    # def id(self):
+    #     return str(self._id)
+    # def __getitem__(self, key):
+    #     if key == "_id":
+    #         return str(self._id)
+    #     else:
+    #         return super().__getitem__(key)
+    # def __setitem__(self, key, value):
+    #     self.__dict__[key] = value
 
 
 class Token(BaseModel):
