@@ -1,16 +1,11 @@
-import datetime
 import logging
 from typing import Any, Dict, Union
 from bson import ObjectId
 from fastapi import HTTPException
-import pymongo
 from config import BASE_SHORT_URL
-from controllers.users import get_current_active_user, get_user
 from models import BaseUrl, UrlInDB, User, UserInDB
-from mongodb import get_mongo_client, get_mongo_url_collection, get_mongo_user_collection
-from ultils import format_ids
+from mongodb import  get_mongo_url_collection, get_mongo_user_collection
 from validate import is_valid_url
-from fastapi.responses import JSONResponse
 
 async def add_new_url_to_user(user: Union[UserInDB, Dict[str, Any]], url: UrlInDB):
     if isinstance(user, dict):
@@ -23,9 +18,9 @@ async def add_new_url_to_user(user: Union[UserInDB, Dict[str, Any]], url: UrlInD
         mongo_response = user_collection.find_one({"username": user.username})
         if(mongo_response is None):
             raise HTTPException(status_code=500, detail="Failed to add new url to user")
-        user_updated = mongo_response.copy()  # make a copy of the data
-        user_updated['_id'] = str(mongo_response['_id'])  # convert ObjectId to string
-        user_updated = UrlInDB(**user_updated)  # pass the dictionary to the constructor
+        user_updated = mongo_response.copy()  
+        user_updated['_id'] = str(mongo_response['_id']) 
+        user_updated = UrlInDB(**user_updated)
     except:
         raise HTTPException(status_code=500, detail="Failed to add new url to user")
 
@@ -39,7 +34,6 @@ async def check_valid_request(long_url: str, shortname: str) -> str:
         raise HTTPException(status_code=400, detail="Short name can only contain letters and numbers")
     url_collection = await get_mongo_url_collection()
     if url_collection.find_one({"shortname": shortname}):
-        # return JSONResponse(status_code=202, content= {"detail" : "Short name already exists"})
         raise HTTPException(status_code=400, detail="Short name already exists")
     short_url = BASE_SHORT_URL + shortname
     return short_url
@@ -56,9 +50,9 @@ async def push_url_to_public_db(url: BaseUrl)->UrlInDB:
         mongo_response = url_collection.find_one({"_id": ObjectId(_id.inserted_id)})
         if(mongo_response is None):
             raise Exception("Failed to add new url to public db")
-        url_data_dict = mongo_response.copy()  # make a copy of the data
-        url_data_dict['_id'] = str(mongo_response['_id'])  # convert ObjectId to string
-        url_data = UrlInDB(**url_data_dict)  # pass the dictionary to the constructor
+        url_data_dict = mongo_response.copy() 
+        url_data_dict['_id'] = str(mongo_response['_id']) 
+        url_data = UrlInDB(**url_data_dict) 
         return url_data
     except:
         logging.warning("Failed to add new url to public db")
