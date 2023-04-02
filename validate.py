@@ -9,3 +9,9 @@ def is_valid_url(url):
         r'(?::\d+)?' # port
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
     return bool(regex.match(url))
+
+def is_valid_shortname(shortname):
+    regex = re.compile(
+        r'^[a-zA-Z0-9_-]{6,20}$'
+    )
+    return bool(regex.match(shortname))

@@ -5,10 +5,11 @@ import pymongo
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.responses import JSONResponse
-from config import MONGODB_NAME, BASE_SHORT_URL,MONGODB_URL
-from controllers.shortener import add_new_url_to_user, check_valid_request, push_url_to_public_db
+from config import MONGODB_NAME, MONGODB_URL
+from controllers.shortener import add_new_url_to_user, check_valid_request, get_urls_from_user, push_url_to_public_db, remove_url, update_url
 from controllers.users import get_current_active_user, get_user_ins
 from models import BaseUrl, User
+from validate import is_valid_shortname, is_valid_url
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ url_collection = db["url_collection"]
 
 
 @router.post("/shorten" )
-async def shorten_url(long_url: str, short_name: str,current_user: User = Depends(get_current_active_user)):
+async def shorten_url(long_url: str, short_name: str,current_user: User = Depends(get_current_active_user)):      
     short_url = await check_valid_request(long_url, short_name)
     url_request = BaseUrl(shortname=short_name,short_url=str(short_url), long_url=long_url)
     url_in_db = await push_url_to_public_db(url_request)
@@ -41,62 +42,20 @@ async def redirect_to_long_url(short_name: str):
     return RedirectResponse(url=long_url)
 
 
-@router.patch("/admin/edit-url" )
-async def edit_url(short_name: Optional[str] = None, short_url: Optional[str] = None, long_url: str = None): # type: ignore
-    if long_url is None:
-        raise HTTPException(status_code=400, detail="Long URL must be provided")
-    if short_name is None and short_url is None:
-        raise HTTPException(status_code=400, detail="Either short_name or short_url must be provided")
+@router.patch("/user/edit-url" )
+async def edit_url(shortname: str, new_shortname:str,  new_long_url: str,current_user: User = Depends(get_current_active_user)): 
+    result = await update_url(shortname,new_shortname, new_long_url,current_user['username'])
+    return {"message": "success","shortname" :result.shortname , "short_url": result.short_url, "long_url": result.long_url}
+ 
 
-    if short_name is not None:
-        filter = {"shortname": short_name}
-    else:
-        if not str(short_url).startswith(BASE_SHORT_URL):
-            raise HTTPException(status_code=400, detail="Short URL must start with " + BASE_SHORT_URL)
-
-        short_name = str(short_url)[len(BASE_SHORT_URL):]
-        filter = {"shortname": short_name}
-
-    url_doc = url_collection.find_one(filter)
-
-    if url_doc is None:
-        raise HTTPException(status_code=404, detail="Short URL not found")
-
-    result = url_collection.update_one(filter, {"$set": {"long_url": long_url}})
-
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Failed to update the record")
-
-    return {"short_url": BASE_SHORT_URL + short_name, "long_url": long_url}
-
-
-@router.delete("/admin/delete-url" )
-async def delete_url(short_name: Optional[str] = None, short_url: Optional[str] = None, id : Optional[str] = None):
-    if short_name is None and short_url is None and id is None:
-        raise HTTPException(status_code=400, detail="Either id or short_name or short_url must be provided")
-
-    if id is not None:
-        filter = {"_id": ObjectId(id)}
-    elif short_name is not None:
-        filter = {"shortname": short_name}
-    else:
-        if not str(short_url).startswith(BASE_SHORT_URL):
-            raise HTTPException(status_code=400, detail="Short URL must start with " + BASE_SHORT_URL)
-
-        short_name = str(short_url)[len(BASE_SHORT_URL):]
-        filter = {"shortname": short_name}
-
-    result = url_collection.delete_one(filter)
-
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Short URL not found")
-
+@router.delete("/user/delete-url" )
+async def delete_url(short_name:str,current_user: User = Depends(get_current_active_user)):
+    if short_name is None:
+        raise HTTPException(status_code=400, detail="Short name must be provided")
+    await remove_url(short_name,current_user['username'])
     return {"message": "Short URL deleted successfully"}
 
-@router.get("/admin/get_urls" )
-async def get_urls():
-    urls = []
-    get_all_urls = url_collection.find()
-    for url in get_all_urls:
-        urls.append({"id": str(url['_id']) ,"short_url": url['short_url'], "long_url": url["long_url"]})
+@router.get("/user/get_urls" )
+async def get_urls(current_user: User = Depends(get_current_active_user)):
+    urls = await get_urls_from_user(current_user)
     return {"urls": urls}
