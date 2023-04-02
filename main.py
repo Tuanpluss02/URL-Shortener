@@ -1,14 +1,12 @@
 import logging
-from typing import Optional
-from bson import ObjectId
 import pymongo
-from fastapi import FastAPI, HTTPException, Response
-from fastapi.responses import RedirectResponse
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
-from config import MONGODB_NAME, BASE_SHORT_URL,MONGODB_URL
-from validate import is_valid_url
+from config import MONGODB_URL
 from api import router as api_router
+from starlette.exceptions import HTTPException
+from starlette.templating import Jinja2Templates
 
 
 app = FastAPI()
@@ -56,6 +54,16 @@ app.add_middleware(
     # except pymongo.error.CollectionInvalid as error: # type: ignore
     #     logging.warning(error)
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+css = "static/style.css"
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code == status.HTTP_404_NOT_FOUND:
+        return templates.TemplateResponse("404.html", {"request": request,"css": css }, status_code=404)
+    else:
+        return exc
 
 @app.on_event("shutdown")
 async def shutdown_event():
