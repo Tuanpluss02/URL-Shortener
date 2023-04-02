@@ -58,4 +58,5 @@ async def delete_url(short_name:str,current_user: User = Depends(get_current_act
 @router.get("/user/get_urls" )
 async def get_urls(current_user: User = Depends(get_current_active_user)):
     urls = await get_urls_from_user(current_user)
+    urls = urls.reverse()
     return {"urls": urls}
