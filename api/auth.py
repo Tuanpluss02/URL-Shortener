@@ -20,10 +20,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-
 @router.post("/token" , response_model=Token)
-async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token( form_data: OAuth2PasswordRequestForm = Depends()):
     user = await authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -59,3 +57,4 @@ async def create_user_in_db(request: BaseUser, collection = Depends(get_mongo_us
 @router.get("/verify" )
 async def get_user_from_token(current_user: User = Depends(get_current_active_user),):
     return current_user
+

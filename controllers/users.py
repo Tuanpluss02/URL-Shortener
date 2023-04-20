@@ -22,7 +22,7 @@ def verify_password(plain_password_w_salt, hashed_password):
 
 
 def get_password_hash(password_w_salt):
-    return pwd_context.hash(password_w_salt)    
+    return pwd_context.hash(password_w_salt)
 
 
 async def authenticate_user(username: str, password: str):
@@ -52,7 +52,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
         username = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -94,14 +94,16 @@ async def get_user(name) -> UserInDB:
         row = format_ids(row)
         return row
     else:
-        return UserInDB(**{})
+        raise HTTPException(status_code=404, detail="User not found")
 
-async def get_user_ins(name:str) -> UserInDB:
+
+async def get_user_ins(name: str) -> UserInDB:
     users_collection = await get_mongo_user_collection()
     mongo_response = users_collection.find_one({"username": name})
     if mongo_response is None:
         return UserInDB(**{})
     user_data_dict = mongo_response.copy()  # make a copy of the data
-    user_data_dict['_id'] = str(mongo_response['_id'])  # convert ObjectId to string    url_data = UrlInDB(**url_data_dict) 
+    # convert ObjectId to string    url_data = UrlInDB(**url_data_dict)
+    user_data_dict['_id'] = str(mongo_response['_id'])
     user_data = UserInDB(**user_data_dict)
     return user_data

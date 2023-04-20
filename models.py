@@ -20,7 +20,6 @@ class UrlInDB(BaseModel):
         return self.__dict__
 
 
-
 class BaseUser(BaseModel):
     username : str
     password : str
@@ -34,10 +33,9 @@ class User(BaseModel):
     def __getitem__(self, key):
         return self.__dict__[key]
 
+
 class UserInDB(User):
     _id: ObjectId = ObjectId()
-
-
 
 class Token(BaseModel):
     access_token: str
