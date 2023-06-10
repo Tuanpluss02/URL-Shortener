@@ -1,10 +1,10 @@
 import bcrypt
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
 from config import ALGORITHM, SECRET_KEY
-from models import TokenData, UrlInDB, User, UserInDB
+from models import TokenData, User, UserInDB
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from mongodb import get_mongo_user_collection
@@ -102,8 +102,7 @@ async def get_user_ins(name: str) -> UserInDB:
     mongo_response = users_collection.find_one({"username": name})
     if mongo_response is None:
         return UserInDB(**{})
-    user_data_dict = mongo_response.copy()  # make a copy of the data
-    # convert ObjectId to string    url_data = UrlInDB(**url_data_dict)
+    user_data_dict = mongo_response.copy()
     user_data_dict['_id'] = str(mongo_response['_id'])
     user_data = UserInDB(**user_data_dict)
     return user_data

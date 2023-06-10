@@ -12,6 +12,6 @@ def is_valid_url(url):
 
 def is_valid_shortname(shortname):
     regex = re.compile(
-        r'^[a-zA-Z0-9_-]{6,20}$'
+        r'^[a-zA-Z0-9_-]{3,50}$'
     )
     return bool(regex.match(shortname))

@@ -10,6 +10,14 @@
         {
             "src": "/(.*)",
             "dest": "main.py"
+        },
+        {
+            "handle": "filesystem"
+        },
+        {
+            "src": "/(.*)",
+            "status": 404,
+            "dest": "/404.html"
         }
     ],
     "alias": "stormx.vercel.app"
